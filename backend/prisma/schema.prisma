@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  roleName    String   @unique
+  description String?
+  users       User[]
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  roleId      String
+  role        Role     @relation(fields: [roleId], references: [id])
+  createdAt   DateTime @default(now())
+
+  // Relationships
+  documents   Document[]           @relation("DocumentOwner")
+  versions    DocumentVersion[]    @relation("UploadedBy")
+  permissions DocumentPermission[]
+  shareLinks  ShareLink[]          @relation("CreatedBy")
+  auditLogs   AuditLog[]
+
+  @@index([email])
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String
+  owner       User     @relation("DocumentOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isArchived  Boolean  @default(false)
+
+  // Relationships
+  versions    DocumentVersion[]
+  permissions DocumentPermission[]
+  shareLinks  ShareLink[]
+
+  @@index([ownerId])
+}
+
+model DocumentVersion {
+  id            String   @id @default(uuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id])
+  filePath      String
+  versionNumber Int
+  uploadedBy    String
+  uploader      User     @relation("UploadedBy", fields: [uploadedBy], references: [id])
+  uploadedAt    DateTime @default(now())
+  fileSize      Int
+  fileType      String
+
+  @@index([documentId])
+}
+
+model DocumentPermission {
+  id             String   @id @default(uuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id])
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  permissionType String   // e.g., "view", "edit", "download"
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+model ShareLink {
+  id           String   @id @default(uuid())
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id])
+  token        String   @unique
+  expiresAt    DateTime
+  createdBy    String
+  creator      User     @relation("CreatedBy", fields: [createdBy], references: [id])
+  createdAt    DateTime @default(now())
+  accessLimit  Int?     // Optional limit for how many times the link can be used
+  accessCount  Int      @default(0)
+
+  @@index([token])
+  @@index([documentId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String   // e.g., "UPLOAD_VERSION", "CREATE_LINK", "VIEW_DOC"
+  entityType String   // e.g., "document", "share", "user"
+  entityId   String
+  timestamp  DateTime @default(now())
+  ipAddress  String?
+
+  @@index([timestamp]) // The strategy mentioned createdAt, keeping logic aligned
+}
