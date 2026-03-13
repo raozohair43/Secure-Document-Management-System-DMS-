@@ -1,0 +1,57 @@
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans animate-fade-in-up">
+  
+  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+    <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-600 text-white mb-4 shadow-lg">
+      <lucide-icon [img]="ShieldIcon" class="w-7 h-7"></lucide-icon>
+    </div>
+    <h2 class="text-center text-3xl font-extrabold text-gray-900">SecureDocs</h2>
+    <p class="mt-2 text-center text-sm text-gray-600">Secure File Sharing</p>
+  </div>
+
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    
+    <div *ngIf="isLoading()" class="bg-white py-12 px-4 shadow-sm sm:rounded-2xl sm:px-10 border border-gray-100 flex flex-col items-center justify-center text-center">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600 mb-4"></div>
+      <p class="text-sm text-gray-500">Verifying secure link...</p>
+    </div>
+
+    <div *ngIf="!isLoading() && errorMessage()" class="bg-white py-12 px-4 shadow-sm sm:rounded-2xl sm:px-10 border border-red-100 flex flex-col items-center justify-center text-center animate-fade-in-up">
+      <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+        <lucide-icon [img]="AlertIcon" class="w-8 h-8"></lucide-icon>
+      </div>
+      <h3 class="text-lg font-bold text-gray-900 mb-2">Access Denied</h3>
+      <p class="text-sm text-gray-500">{{ errorMessage() }}</p>
+      <p class="mt-6 text-xs text-gray-400">Please contact the sender for a new link.</p>
+    </div>
+
+    <div *ngIf="!isLoading() && document()" class="bg-white py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-2xl sm:px-10 border border-gray-100 animate-fade-in-up relative overflow-hidden">
+      
+      <div class="absolute top-0 left-0 w-full h-1.5 bg-indigo-500"></div>
+
+      <div class="text-center mt-4">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-50 text-indigo-600 mb-6 border border-indigo-100">
+          <lucide-icon [img]="FileIcon" class="w-10 h-10"></lucide-icon>
+        </div>
+        
+        <h3 class="text-xl font-bold text-gray-900 truncate px-4" [title]="document().title">{{ document().title }}</h3>
+        
+        <p class="mt-2 text-sm text-gray-500 flex items-center justify-center">
+          Shared by <span class="font-medium text-gray-900 ml-1">{{ document().owner?.name || 'a user' }}</span>
+        </p>
+
+        <div class="mt-8 pt-6 border-t border-gray-100">
+          <button (click)="downloadFile()" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all hover:shadow-md">
+            <lucide-icon [img]="DownloadIcon" class="w-5 h-5 mr-2"></lucide-icon>
+            Download Secure File
+          </button>
+          
+          <p class="mt-4 text-xs text-gray-400 flex items-center justify-center">
+            <lucide-icon [img]="ShieldIcon" class="w-3 h-3 mr-1"></lucide-icon>
+            Encrypted and scanned for threats
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

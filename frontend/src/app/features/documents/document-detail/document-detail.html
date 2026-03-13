@@ -1,0 +1,252 @@
+<div class="space-y-6 animate-fade-in-up" *ngIf="!isLoading() && document()">
+  
+  <div>
+    <a routerLink="/documents" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors mb-4">
+      <lucide-icon [img]="BackIcon" class="w-4 h-4 mr-1"></lucide-icon>
+      Back to Documents
+    </a>
+    
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+          <lucide-icon [img]="FileIcon" class="w-6 h-6"></lucide-icon>
+        </div>
+        <div class="ml-4">
+          <h1 class="text-2xl font-bold text-gray-900">{{ document().title }}</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Owned by <span class="font-medium text-gray-900">{{ document().owner.name }}</span> • 
+            Created {{ document().createdAt | date:'mediumDate' }}
+          </p>
+        </div>
+      </div>
+      
+      <div *ngIf="canEdit" class="relative">
+        <input type="file" (change)="onNewVersionSelected($event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" [disabled]="isUploading()">
+        <button class="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50">
+          <lucide-icon *ngIf="!isUploading()" [img]="UploadIcon" class="w-4 h-4 mr-2 text-gray-500"></lucide-icon>
+          <span *ngIf="isUploading()" class="w-4 h-4 mr-2 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></span>
+          {{ isUploading() ? 'Uploading...' : 'Upload New Version' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-b border-gray-200">
+    <nav class="-mb-px flex space-x-8">
+      <button (click)="setTab('history')" [class.border-indigo-500]="activeTab() === 'history'" [class.text-indigo-600]="activeTab() === 'history'" class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
+        <lucide-icon [img]="ClockIcon" class="w-4 h-4 mr-2"></lucide-icon> Version History
+      </button>
+      <button (click)="setTab('permissions')" [class.border-indigo-500]="activeTab() === 'permissions'" [class.text-indigo-600]="activeTab() === 'permissions'" class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
+        <lucide-icon [img]="ShieldIcon" class="w-4 h-4 mr-2"></lucide-icon> Access Control
+      </button>
+      <button (click)="setTab('shares')" [class.border-indigo-500]="activeTab() === 'shares'" [class.text-indigo-600]="activeTab() === 'shares'" class="whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm flex items-center border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
+        <lucide-icon [img]="LinkIcon" class="w-4 h-4 mr-2"></lucide-icon> Share Links
+      </button>
+    </nav>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    
+    <div *ngIf="activeTab() === 'history'" class="space-y-6">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">Document Timeline</h3>
+      
+      <div class="flow-root">
+        <ul role="list" class="-mb-8">
+          <li *ngFor="let version of document().versions; let last = last">
+            <div class="relative pb-8">
+              <span *ngIf="!last" class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+              
+              <div class="relative flex space-x-3">
+                <div>
+                  <span class="h-8 w-8 rounded-full bg-indigo-50 flex items-center justify-center ring-8 ring-white text-indigo-600">
+                    <lucide-icon [img]="GenericFileIcon" class="w-4 h-4"></lucide-icon>
+                  </span>
+                </div>
+                <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                  <div>
+                    <p class="text-sm text-gray-500">
+                      Version {{ version.versionNumber }} 
+                      <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 ml-2 uppercase">{{ version.fileType.split('/')[1] || 'FILE' }}</span>
+                      <span class="text-xs text-gray-400 ml-2">({{ (version.fileSize / 1024 / 1024) | number:'1.2-2' }} MB)</span>
+                    </p>
+                  </div>
+                  <div class="text-right text-sm whitespace-nowrap text-gray-500 flex items-center gap-4">
+                    <time [attr.datetime]="version.createdAt">{{ version.createdAt | date:'MMM d, y, h:mm a' }}</time>
+                    <button *ngIf="canDownload" (click)="downloadFile(version)" class="text-indigo-600 hover:text-indigo-900 transition-colors tooltip-trigger" title="Download this version">
+                      <lucide-icon [img]="DownloadIcon" class="w-5 h-5"></lucide-icon>
+                    </button>
+                    <button (click)="viewVersion(version.id)" class="text-blue-500 hover:text-blue-700 tooltip-trigger mr-3" title="View Document">
+                    <lucide-icon [img]="EyeIcon" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div *ngIf="activeTab() === 'permissions'" class="space-y-8 animate-fade-in-up">
+      
+      <div *ngIf="document().ownerId === currentUser()?.id" class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Grant Access</h3>
+        <div class="flex flex-col sm:flex-row gap-4 items-end">
+          
+          <div class="flex-1 w-full">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Select User</label>
+            <select [(ngModel)]="selectedUserId" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+              <option value="" disabled selected>Choose a user...</option>
+              <option *ngFor="let user of availableUsers()" [value]="user.id">
+                {{ user.name }} ({{ user.email }})
+              </option>
+            </select>
+          </div>
+
+          <div class="w-full sm:w-48">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Permission Type</label>
+            <select [(ngModel)]="selectedPermissionType" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+              <option value="view">View Only (Read)</option>
+              <option value="edit">Editor (Write)</option>
+              <option value="download">Download Only</option>
+            </select>
+          </div>
+
+          <button (click)="grantAccess()" [disabled]="!selectedUserId || isGranting()" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors flex items-center justify-center">
+            <lucide-icon *ngIf="!isGranting()" [img]="UserPlusIcon" class="w-4 h-4 mr-2"></lucide-icon>
+            <span *ngIf="isGranting()" class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Grant Access
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">People with Access</h3>
+        
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div class="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-gray-50/50">
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200">
+                {{ document().owner.name.charAt(0) }}
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-900">{{ document().owner.name }} <span class="ml-2 text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Owner</span></p>
+                <p class="text-sm text-gray-500">{{ document().owner.email }}</p>
+              </div>
+            </div>
+            <span class="text-sm text-gray-500 font-medium">Full Access</span>
+          </div>
+
+          <ng-container *ngIf="document().permissions?.length; else noPermissions">
+            <div *ngFor="let perm of document().permissions" class="px-6 py-4 flex items-center justify-between border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold border border-gray-200">
+                  {{ perm.user.name.charAt(0) }}
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-900">{{ perm.user.name }}</p>
+                  <p class="text-sm text-gray-500">{{ perm.user.email }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-700 bg-gray-100 px-3 py-1 rounded-md">{{ perm.accessLevel }}</span>
+                <button *ngIf="document().ownerId === currentUser()?.id" (click)="revokeAccess(perm.id)" class="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg tooltip-trigger" title="Revoke Access">
+                  <lucide-icon [img]="TrashIcon" class="w-4 h-4"></lucide-icon>
+                </button>
+              </div>
+            </div>
+          </ng-container>
+          
+          <ng-template #noPermissions>
+            <div class="px-6 py-8 text-center text-sm text-gray-500">
+              This document hasn't been shared with anyone else yet.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="activeTab() === 'shares'" class="space-y-8 animate-fade-in-up">
+      
+      <div *ngIf="canEdit" class="bg-indigo-50/50 p-6 rounded-xl border border-indigo-100">
+        <h3 class="text-sm font-semibold text-indigo-900 mb-4 uppercase tracking-wider flex items-center">
+          <lucide-icon [img]="LinkIcon" class="w-4 h-4 mr-2"></lucide-icon> Generate Secure Link
+        </h3>
+        
+        <div class="flex flex-col sm:flex-row gap-4 items-end">
+          
+          <div class="flex-1 w-full">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Expiration Date & Time *</label>
+            <input type="datetime-local" [(ngModel)]="shareExpiry" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+          </div>
+
+          <div class="w-full sm:w-48">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Max Views (Optional)</label>
+            <input type="number" min="1" [(ngModel)]="shareLimit" placeholder="e.g. 5" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
+          </div>
+
+          <button (click)="generateShareLink()" [disabled]="!shareExpiry || isGeneratingLink()" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors flex items-center justify-center">
+            <span *ngIf="isGeneratingLink()" class="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Generate Link
+          </button>
+        </div>
+
+        <div *ngIf="generatedUrl()" class="mt-6 p-4 bg-white border border-emerald-200 rounded-lg flex flex-col sm:flex-row items-center gap-4 animate-fade-in-up">
+          <input type="text" readonly [value]="generatedUrl()" class="flex-1 w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-600 focus:outline-none">
+          <button (click)="copyToClipboard()" class="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium rounded-md transition-colors border border-emerald-200">
+            <lucide-icon *ngIf="!hasCopied()" [img]="CopyIcon" class="w-4 h-4 mr-2"></lucide-icon>
+            <lucide-icon *ngIf="hasCopied()" [img]="CheckIcon" class="w-4 h-4 mr-2"></lucide-icon>
+            {{ hasCopied() ? 'Copied!' : 'Copy Link' }}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider">Active Public Links</h3>
+        
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <ng-container *ngIf="document().shareLinks?.length; else noLinks">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Token</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Views</th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-100">
+                <tr *ngFor="let link of document().shareLinks">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">{{ link.token | slice:0:8 }}...</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span [class.text-red-500]="link?.expiresAt < currentDate">{{ link?.expiresAt | date:'medium' }}</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ link.accessCount }} / {{ link.accessLimit ? link.accessLimit : '∞' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button (click)="revokeShareLink(link.id)" class="text-red-500 hover:text-red-700 tooltip-trigger" title="Revoke Link">
+                      <lucide-icon [img]="TrashIcon" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </ng-container>
+          
+          <ng-template #noLinks>
+            <div class="px-6 py-8 text-center text-sm text-gray-500">
+              There are no active public links for this document.
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div *ngIf="isLoading()" class="flex justify-center items-center h-64">
+  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+</div>
+

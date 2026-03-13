@@ -1,0 +1,13 @@
+<div class="min-h-screen bg-gray-50 font-sans flex">
+      <app-sidebar [isOpen]="sidebarOpen()" (toggle)="toggleSidebar()"></app-sidebar>
+
+      <div class="flex-1 flex flex-col lg:pl-64 transition-all duration-300">
+        <app-navbar (toggleMenu)="toggleSidebar()"></app-navbar>
+
+        <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <div class="max-w-7xl mx-auto animate-fade-in-up">
+            <router-outlet></router-outlet>
+          </div>
+        </main>
+      </div>
+    </div>
